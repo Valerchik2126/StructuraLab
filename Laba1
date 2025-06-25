@@ -17,8 +17,23 @@ public class MaxGcdSum {
         System.out.println("Группа: 090301-ПОВб-з23");
         System.out.println();
 
+        // Получаем объект Runtime для измерения памяти
+        Runtime runtime = Runtime.getRuntime();
+        
+        // Запуск сборщика мусора для более точных замеров памяти
+        System.gc();
+        
+        // Замер памяти до выполнения
+        long memoryBefore = runtime.totalMemory() - runtime.freeMemory();
+
         Scanner scanner = new Scanner(System.in);
+        
+        // Ввод данных пользователем
+        System.out.print("Введите число N: ");
         int N = scanner.nextInt();
+        
+        // Начало отсчета времени ПОСЛЕ ввода данных
+        long startTime = System.nanoTime();
 
         // Находим наибольший делитель N (кроме самого N)
         int maxDivisor = 1;
@@ -31,15 +46,38 @@ public class MaxGcdSum {
             }
         }
 
-        // Если N простое, то ответ 1 и N-1
+        // Вывод результата
         if (maxDivisor == 1) {
-            System.out.println(1 + " " + (N - 1));
+            System.out.println("Результат: " + 1 + " " + (N - 1));
         } else {
-            int A = maxDivisor;
-            int B = N - maxDivisor;
-            System.out.println(A + " " + B);
+            System.out.println("Результат: " + maxDivisor + " " + (N - maxDivisor));
         }
 
+        // Конец отсчета времени
+        long endTime = System.nanoTime();
+        
+        // Замер памяти после выполнения
+        long memoryAfter = runtime.totalMemory() - runtime.freeMemory();
+        
+        // Вычисление использованной памяти в МБ
+        double memoryUsed = (memoryAfter - memoryBefore) / (1024.0 * 1024.0);
+        
+        // Вычисление времени выполнения в миллисекундах
+        double timeElapsed = (endTime - startTime) / 1_000_000.0;
+
+        // Вывод статистики производительности
+        System.out.println("\n--- Статистика выполнения ---");
+        System.out.printf("Чистое время вычислений: %.3f мс%n", timeElapsed);
+        System.out.printf("Использовано памяти: %.2f MB%n", memoryUsed);
+        
+        // Проверка соответствия требованиям
+        if (timeElapsed < 1000 && memoryUsed < 64) {
+            System.out.println("Соответствует требованиям: время < 1 с, память < 64 MB");
+        } else {
+            System.out.println("Не соответствует требованиям!");
+            System.out.println("Примечание: время замеряется только на вычисления, без учета ввода данных");
+        }
+        
         scanner.close();
     }
 }
