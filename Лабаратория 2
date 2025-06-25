@@ -1,0 +1,174 @@
+import java.util.Random; // Импорт класса для генерации случайных чисел
+
+public class MatrixMultiplicationBenchmark {
+    // Константы класса
+    private static final int SIZE = 1024; // Размер матриц (1024x1024)
+    private static final int BLOCK_SIZE = 64; // Размер блоков для блочного умножения
+    private static final Random random = new Random(); // Генератор случайных чисел
+
+    public static void main(String[] args) {
+        // Вывод информации об авторе работы
+        System.out.println("Автор: Иванова Валерия Алексеевна");
+        System.out.println("Группа: 090301-ПОВб-з23\n");
+
+        // Генерация двух случайных матриц для умножения
+        double[][] matrixA = generateRandomMatrix(SIZE);
+        double[][] matrixB = generateRandomMatrix(SIZE);
+        double[][] result; // Матрица для хранения результата
+
+        /* Тестирование 1: Наивный алгоритм умножения матриц */
+        System.out.println("1. Наивное перемножение");
+        long startTime = System.nanoTime(); // Засекаем время начала
+        result = naiveMultiplication(matrixA, matrixB); // Выполняем умножение
+        long naiveTime = System.nanoTime() - startTime; // Вычисляем время выполнения
+        printPerformance(naiveTime); // Выводим результаты производительности
+
+        /* Тестирование 2: Оптимизированный алгоритм (BLAS-подобный) */
+        System.out.println("\n2. Оптимизированное перемножение (BLAS-подобное)");
+        startTime = System.nanoTime();
+        result = optimizedMultiplication(matrixA, matrixB);
+        long optimizedTime = System.nanoTime() - startTime;
+        printPerformance(optimizedTime);
+
+        /* Тестирование 3: Блочный алгоритм умножения */
+        System.out.println("\n3. Блочное перемножение");
+        startTime = System.nanoTime();
+        result = blockMultiplication(matrixA, matrixB, BLOCK_SIZE);
+        long blockTime = System.nanoTime() - startTime;
+        printPerformance(blockTime);
+
+        // Сравнение производительности всех трех алгоритмов
+        comparePerformance(naiveTime, optimizedTime, blockTime);
+    }
+
+    /**
+     * Генерирует случайную квадратную матрицу заданного размера
+     * @param size - размер матрицы (size x size)
+     * @return заполненная случайными значениями матрица
+     */
+    private static double[][] generateRandomMatrix(int size) {
+        double[][] matrix = new double[size][size]; // Создаем матрицу
+        // Заполняем матрицу случайными числами
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                matrix[i][j] = random.nextDouble(); // Случайное число от 0.0 до 1.0
+            }
+        }
+        return matrix;
+    }
+
+    /**
+     * Наивный алгоритм умножения матриц (стандартный тройной цикл)
+     * @param a - первая матрица
+     * @param b - вторая матрица
+     * @return результат умножения a × b
+     */
+    private static double[][] naiveMultiplication(double[][] a, double[][] b) {
+        int n = a.length; // Получаем размер матрицы
+        double[][] c = new double[n][n]; // Матрица для результата
+        
+        // Классический алгоритм O(n^3)
+        for (int i = 0; i < n; i++) { // Цикл по строкам первой матрицы
+            for (int j = 0; j < n; j++) { // Цикл по столбцам второй матрицы
+                double sum = 0.0; // Накопитель суммы
+                for (int k = 0; k < n; k++) { // Цикл вычисления суммы произведений
+                    sum += a[i][k] * b[k][j]; // Умножение элементов и добавление к сумме
+                }
+                c[i][j] = sum; // Сохраняем результат в матрицу
+            }
+        }
+        return c;
+    }
+
+    /**
+     * Оптимизированный алгоритм умножения матриц (улучшенная версия)
+     * @param a - первая матрица
+     * @param b - вторая матрица
+     * @return результат умножения a × b
+     */
+    private static double[][] optimizedMultiplication(double[][] a, double[][] b) {
+        int n = a.length;
+        double[][] c = new double[n][n];
+        
+        // Оптимизация: изменен порядок циклов для лучшей кэш-локальности
+        for (int i = 0; i < n; i++) { // Цикл по строкам первой матрицы
+            for (int k = 0; k < n; k++) { // Цикл по общему измерению
+                double aik = a[i][k]; // Кэшируем значение для повторного использования
+                for (int j = 0; j < n; j++) { // Цикл по столбцам второй матрицы
+                    c[i][j] += aik * b[k][j]; // Умножение с накоплением
+                }
+            }
+        }
+        return c;
+    }
+
+    /**
+     * Блочный алгоритм умножения матриц (оптимизированный для кэша)
+     * @param a - первая матрица
+     * @param b - вторая матрица
+     * @param blockSize - размер блоков
+     * @return результат умножения a × b
+     */
+    private static double[][] blockMultiplication(double[][] a, double[][] b, int blockSize) {
+        int n = a.length;
+        double[][] c = new double[n][n];
+        
+        // Внешние циклы по блокам
+        for (int ii = 0; ii < n; ii += blockSize) { // Блоки по строкам
+            for (int jj = 0; jj < n; jj += blockSize) { // Блоки по столбцам
+                for (int kk = 0; kk < n; kk += blockSize) { // Блоки по общему измерению
+                    // Внутренние циклы внутри блока
+                    for (int i = ii; i < Math.min(ii + blockSize, n); i++) {
+                        for (int k = kk; k < Math.min(kk + blockSize, n); k++) {
+                            double aik = a[i][k]; // Локальное кэширование
+                            for (int j = jj; j < Math.min(jj + blockSize, n); j++) {
+                                c[i][j] += aik * b[k][j]; // Умножение с накоплением
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return c;
+    }
+
+    /**
+     * Выводит показатели производительности алгоритма
+     * @param timeNs - время выполнения в наносекундах
+     */
+    private static void printPerformance(long timeNs) {
+        double timeSec = timeNs / 1e9; // Конвертируем в секунды
+        double complexity = 2 * Math.pow(SIZE, 3); // Вычисляем сложность (2n^3 операций)
+        double mflops = complexity / timeSec / 1e6; // Вычисляем MFlops (миллионов операций в секунду)
+        
+        System.out.printf("Время: %.3f сек\n", timeSec);
+        System.out.printf("Производительность: %.2f MFlops\n", mflops);
+    }
+
+    /**
+     * Сравнивает производительность трех алгоритмов
+     * @param naiveTime - время наивного алгоритма
+     * @param optimizedTime - время оптимизированного алгоритма
+     * @param blockTime - время блочного алгоритма
+     */
+    private static void comparePerformance(long naiveTime, long optimizedTime, long blockTime) {
+        // Конвертируем время в секунды
+        double naiveSec = naiveTime / 1e9;
+        double optimizedSec = optimizedTime / 1e9;
+        double blockSec = blockTime / 1e9;
+        
+        System.out.println("\nСравнение производительности:");
+        // Сравнение оптимизированного и наивного
+        System.out.printf("Оптимизированный в %.2f раз быстрее наивного\n", naiveSec / optimizedSec);
+        // Сравнение блочного и наивного
+        System.out.printf("Блочный в %.2f раз быстрее наивного\n", naiveSec / blockSec);
+        
+        // Проверка требования к блочному алгоритму (не менее 30% от оптимизированного)
+        double ratio = blockSec / optimizedSec;
+        if (ratio <= 1.3) {
+            System.out.printf("Блочный алгоритм достиг %.1f%% от оптимизированного\n", 100/ratio);
+        } else {
+            System.out.printf("Блочный алгоритм не достиг 30%% от оптимизированного (%.1f%%)\n", 100/ratio);
+        }
+    }
+}
