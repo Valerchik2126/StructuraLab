@@ -1,0 +1,45 @@
+import java.util.Scanner;
+
+public class MaxGcdSum {
+    // Метод для вычисления НОД по алгоритму Евклида
+    public static int gcd(int a, int b) {
+        while (b != 0) {
+            int temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    public static void main(String[] args) {
+        // Вывод информации об авторе
+        System.out.println("Автор: Иванова Валерия Алексеевна");
+        System.out.println("Группа: 090301-ПОВб-з23");
+        System.out.println();
+
+        Scanner scanner = new Scanner(System.in);
+        int N = scanner.nextInt();
+
+        // Находим наибольший делитель N (кроме самого N)
+        int maxDivisor = 1;
+        for (int i = 2; i * i <= N; i++) {
+            if (N % i == 0) {
+                maxDivisor = Math.max(maxDivisor, i);
+                if (i != N / i) {
+                    maxDivisor = Math.max(maxDivisor, N / i);
+                }
+            }
+        }
+
+        // Если N простое, то ответ 1 и N-1
+        if (maxDivisor == 1) {
+            System.out.println(1 + " " + (N - 1));
+        } else {
+            int A = maxDivisor;
+            int B = N - maxDivisor;
+            System.out.println(A + " " + B);
+        }
+
+        scanner.close();
+    }
+}
