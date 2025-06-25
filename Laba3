@@ -1,0 +1,186 @@
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Scanner;
+
+/**
+ * Программа для решения задачи о чередующихся карточках
+ * Определяет исходный порядок карточек в стопке, чтобы при раскладывании
+ * они чередовались по цвету (белая/черная)
+ */
+public class CardArrangement {
+
+    public static void main(String[] args) {
+        // Вывод информации об авторе
+        System.out.println("Автор: Иванова Валерия Алексеевна");
+        System.out.println("Группа: 090301-ПОВб-з23");
+        System.out.println("----------------------------------");
+        
+        // Ввод количества карточек
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Введите количество карточек (n): ");
+        int n = scanner.nextInt();
+        scanner.close();
+        
+        System.out.println("\nНачинаем обработку " + n + " карточек...\n");
+        
+        // Тестирование трех реализаций
+        testArrayImplementation(n);
+        testLinkedListImplementation(n);
+        testStandardLibraryImplementation(n);
+    }
+    
+    /**
+     * Определяет исходный порядок карточек с использованием массива
+     * @param n - количество карточек
+     * @return массив, представляющий исходную колоду карточек
+     */
+    public static String[] solveWithArray(int n) {
+        String[] table = new String[n]; // Карточки на столе (результат)
+        String[] originalDeck = new String[n]; // Исходная колода (которую мы находим)
+        
+        // Инициализируем желаемый результат на столе (чередование B W B W ...)
+        for (int i = 0; i < n; i++) {
+            table[i] = (i % 2 == 0) ? "B" : "W";
+        }
+        
+        // Восстанавливаем исходную колоду, имитируя процесс раскладывания в обратном порядке
+        int deckIndex = n - 1;
+        int tableIndex = n - 1;
+        
+        while (tableIndex >= 0) {
+            // Если в колоде есть карты, перемещаем нижнюю наверх
+            if (deckIndex < n - 1) {
+                String temp = originalDeck[n - 1];
+                System.arraycopy(originalDeck, deckIndex + 1, originalDeck, deckIndex + 2, n - deckIndex - 2);
+                originalDeck[deckIndex + 1] = temp;
+            }
+            
+            // Кладем карточку из стола в колоду
+            originalDeck[deckIndex--] = table[tableIndex--];
+        }
+        
+        return originalDeck;
+    }
+    
+    /**
+     * Определяет исходный порядок карточек с использованием связанного списка
+     * @param n - количество карточек
+     * @return список, представляющий исходную колоду карточек
+     */
+    public static LinkedList<String> solveWithLinkedList(int n) {
+        LinkedList<String> table = new LinkedList<>(); // Желаемый результат на столе
+        LinkedList<String> originalDeck = new LinkedList<>(); // Исходная колода
+        
+        // Инициализируем желаемый результат
+        for (int i = 0; i < n; i++) {
+            table.addFirst((i % 2 == 0) ? "B" : "W");
+        }
+        
+        // Восстанавливаем исходную колоду
+        while (!table.isEmpty()) {
+            if (!originalDeck.isEmpty()) {
+                originalDeck.addFirst(originalDeck.removeLast());
+            }
+            originalDeck.addFirst(table.removeFirst());
+        }
+        
+        return originalDeck;
+    }
+    
+    /**
+     * Определяет исходный порядок карточек с использованием Queue из стандартной библиотеки
+     * @param n - количество карточек
+     * @return очередь, представляющая исходную колоду карточек
+     */
+    public static Queue<String> solveWithStandardLibrary(int n) {
+        Deque<String> table = new ArrayDeque<>(); // Желаемый результат на столе
+        Queue<String> originalDeck = new ArrayDeque<>(); // Исходная колода
+        
+        // Инициализируем желаемый результат
+        for (int i = 0; i < n; i++) {
+            table.addLast((i % 2 == 0) ? "B" : "W");
+        }
+        
+        // Восстанавливаем исходную колоду
+        while (!table.isEmpty()) {
+            if (!originalDeck.isEmpty()) {
+                originalDeck.add(originalDeck.poll());
+            }
+            originalDeck.add(table.pollLast());
+        }
+        
+        return originalDeck;
+    }
+    
+    /**
+     * Тестирование реализации с массивом
+     * @param n - количество карточек
+     */
+    private static void testArrayImplementation(int n) {
+        long startTime = System.nanoTime();
+        String[] result = solveWithArray(n);
+        long duration = System.nanoTime() - startTime;
+        
+        System.out.println("1. Реализация с массивом");
+        printResult(result, 100);
+        System.out.printf("Время выполнения: %.3f мс\n\n", duration / 1_000_000.0);
+    }
+    
+    /**
+     * Тестирование реализации со связанным списком
+     * @param n - количество карточек
+     */
+    private static void testLinkedListImplementation(int n) {
+        long startTime = System.nanoTime();
+        LinkedList<String> result = solveWithLinkedList(n);
+        long duration = System.nanoTime() - startTime;
+        
+        System.out.println("2. Реализация со связанным списком");
+        printResult(result, 100);
+        System.out.printf("Время выполнения: %.3f мс\n\n", duration / 1_000_000.0);
+    }
+    
+    /**
+     * Тестирование реализации со стандартной библиотекой
+     * @param n - количество карточек
+     */
+    private static void testStandardLibraryImplementation(int n) {
+        long startTime = System.nanoTime();
+        Queue<String> result = solveWithStandardLibrary(n);
+        long duration = System.nanoTime() - startTime;
+        
+        System.out.println("3. Реализация со стандартной библиотекой (Queue)");
+        printResult(result, 100);
+        System.out.printf("Время выполнения: %.3f мс\n\n", duration / 1_000_000.0);
+    }
+    
+    /**
+     * Вывод результатов (первые limit элементов)
+     * @param result - результат работы алгоритма
+     * @param limit - количество выводимых элементов
+     */
+    private static void printResult(Iterable<String> result, int limit) {
+        System.out.print("Исходная колода (первые " + limit + " карточек): ");
+        int count = 0;
+        for (String card : result) {
+            System.out.print(card + " ");
+            if (++count >= limit) break;
+        }
+        System.out.println(count < limit ? "" : "...");
+    }
+    
+    /**
+     * Перегрузка метода для массива
+     * @param result - результат работы алгоритма
+     * @param limit - количество выводимых элементов
+     */
+    private static void printResult(String[] result, int limit) {
+        System.out.print("Исходная колода (первые " + limit + " карточек): ");
+        for (int i = 0; i < Math.min(limit, result.length); i++) {
+            System.out.print(result[i] + " ");
+        }
+        System.out.println(result.length > limit ? "..." : "");
+    }
+}
